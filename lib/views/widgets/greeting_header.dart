@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medicine_app/utils/app_colors.dart';
 
 class GreetingHeader extends StatelessWidget {
   const GreetingHeader({super.key});
@@ -20,11 +21,11 @@ class GreetingHeader extends StatelessWidget {
 
         /// Greeting
         const Text(
-          "Hello, Joanna",
+          "Hello, Buddy",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w400,
-            color: Colors.black87,
+            color: AppColors.primaryText,
           ),
         ),
 
@@ -39,8 +40,8 @@ class GreetingHeader extends StatelessWidget {
                 text: "Your medicines for ",
                 style: TextStyle(
                   fontSize: 25,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.black,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.primaryText,
                 ),
               ),
               TextSpan(
@@ -48,7 +49,7 @@ class GreetingHeader extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFFF4A340), // warm orange highlight
+                  color: AppColors.primary, // warm orange highlight
                 ),
               ),
             ],

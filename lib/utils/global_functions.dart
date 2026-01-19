@@ -33,6 +33,24 @@ class GlobalFunctions {
     }
   }
 
+  static String getMedicineTypeName({
+    required MedicineType type,
+  }) {
+    switch (type) {
+      case MedicineType.tablet:
+        return "Tablet";
+
+      case MedicineType.capsule:
+        return "Capsule";
+
+      case MedicineType.injection:
+        return "Injection";
+
+      case MedicineType.spray:
+        return "Spray";
+    }
+  }
+
   static List<DateTime> generateReminderDates({
     required DateTime start,
     required DateTime? end,
@@ -98,6 +116,19 @@ class GlobalFunctions {
     if (period == 'AM' && hour == 12) hour = 0;
 
     return TimeOfDay(hour: hour, minute: minute);
+  }
+
+  static String formatTime(String time) {
+    final parts = time.split(":");
+    if (parts.length != 2) return time;
+
+    int hour = int.tryParse(parts[0]) ?? 0;
+    final minute = parts[1];
+
+    final period = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 == 0 ? 12 : hour % 12;
+
+    return "$hour:$minute $period";
   }
 
 }
