@@ -1,109 +1,183 @@
 import 'package:flutter/material.dart';
+import 'package:medicine_app/utils/global_functions.dart';
+import 'package:medicine_app/utils/string_extension.dart';
 import '../../models/medicine_model.dart';
 
 class ManageReminderCard extends StatelessWidget {
   final MedicineModel medicine;
 
-  const ManageReminderCard({
-    super.key,
-    required this.medicine,
-  });
+  const ManageReminderCard({super.key, required this.medicine});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 10),
-      padding: const EdgeInsets.all(18),
+      margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 0),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
       decoration: BoxDecoration(
-        color: _getPastelColorFromId(medicine.id),
-        borderRadius: BorderRadius.circular(24),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 14,
+            blurRadius: 16,
             offset: const Offset(0, 8),
+            color: Colors.black.withOpacity(0.08),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          /// HEADER ROW (TITLE + ICON)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  medicine.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
+          /// CHECK INDICATOR
+          // Container(
+          //   width: 44,
+          //   height: 44,
+          //   decoration: BoxDecoration(
+          //     shape: BoxShape.circle,
+          //     color: Colors.deepPurple.withOpacity(.12),
+          //   ),
+          //   child: const Icon(
+          //     Icons.check_rounded,
+          //     color: Colors.deepPurple,
+          //     size: 22,
+          //   ),
+          // ),
+          //
+          // const SizedBox(width: 14),
+
+          /// TEXT CONTENT
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                /// MEDICINE NAME
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          medicine.name.capitalizeFirst(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black87,
+                          ),
+                        ),
+
+                        const SizedBox(height: 4),
+
+                        /// TIME + DOSAGE
+                        Text(
+                          "${GlobalFunctions.formatTime(medicine.times.first)} • ${medicine.dosage} ${GlobalFunctions.getMedicineTypeName(type: medicine.type)}"
+                              .toLowerCase(),
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    /// CAPSULE UI
+                    Image.asset(
+                      GlobalFunctions.getMedicineTypeAsset(medicine.type),
+                      width: 70,
+                    ),
+                    // Container(
+                    //   width: 64,
+                    //   height: 30,
+                    //   decoration: BoxDecoration(
+                    //     border: Border.all(color: Colors.grey),
+                    //     borderRadius: BorderRadius.circular(20),
+                    //     gradient: const LinearGradient(
+                    //       colors: [
+                    //         Colors.blue,
+                    //         Color(0xFFC7C4FF),
+                    //       ],
+                    //     ),
+                    //   ),
+                    //   child: Row(
+                    //     children: [
+                    //       Expanded(
+                    //         child: Container(
+                    //           decoration: const BoxDecoration(
+                    //             color: Colors.white,
+                    //             borderRadius: BorderRadius.only(
+                    //               topLeft: Radius.circular(20),
+                    //               bottomLeft: Radius.circular(20),
+                    //             ),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //       const Expanded(child: SizedBox()),
+                    //     ],
+                    //   ),
+                    // ),
+                  ],
+                ),
+
+                const SizedBox(height: 10),
+
+                Text(
+                  medicine.endDate != null
+                      ? "${_formatDateShort(medicine.startDate)} → ${_formatDateShort(medicine.endDate!)}"
+                      : "From ${_formatDateShort(medicine.startDate)}",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.grey.shade600,
                   ),
                 ),
-              ),
-              if(false)
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.medication_outlined,
-                  size: 20,
-                  color: Colors.black54,
-                ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 6),
+                const SizedBox(height: 5),
 
-          /// DESCRIPTION
-          Text(
-            "Take ${medicine.dosage} with water",
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: Colors.black54,
+                Text(
+                  _getRepeatText(medicine.repeatIntervalDays),
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: medicine.times
+                      .map((time) => TimeCapsule(time: time))
+                      .toList(),
+                ),
+
+                const SizedBox(height: 10),
+
+                /// PROGRESS DOTS
+                // Row(
+                //   children: List.generate(
+                //     7,
+                //         (index) => Container(
+                //       margin: const EdgeInsets.only(right: 6),
+                //       width: 6,
+                //       height: 6,
+                //       decoration: BoxDecoration(
+                //         shape: BoxShape.circle,
+                //         color: index < 4
+                //             ? Colors.deepPurple
+                //             : Colors.deepPurple.withOpacity(.25),
+                //       ),
+                //     ),
+                //   ),
+                // ),
+              ],
             ),
           ),
 
-          const SizedBox(height: 14),
-
-          /// TIMES
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: medicine.times.map((t) {
-              return _TimeChip(label: _formatTime(t));
-            }).toList(),
-          ),
-
-          const SizedBox(height: 14),
-
-          /// DATE RANGE
-          Row(
-            children: [
-              _DateInfo(
-                label: "Start",
-                value: _formatDate(medicine.startDate),
-              ),
-              const SizedBox(width: 16),
-              _DateInfo(
-                label: "End",
-                value: medicine.endDate != null
-                    ? _formatDate(medicine.endDate!)
-                    : "No end date",
-              ),
-            ],
-          ),
+          const SizedBox(width: 12),
         ],
       ),
     );
@@ -111,98 +185,70 @@ class ManageReminderCard extends StatelessWidget {
 
   // ---------------- HELPERS ----------------
 
-  Color _getPastelColorFromId(String id) {
-    final colors = PastelColors.lightColors;
-    final index = id.hashCode.abs() % colors.length;
-    return colors[index];
+  String _formatDateShort(DateTime date) {
+    return "${date.day}/${date.month}";
   }
 
-  String _formatDate(DateTime date) {
-    return "${date.day}/${date.month}/${date.year}";
-  }
-
-  /// Converts "08:00" → "8:00 AM"
-  String _formatTime(String time) {
-    final parts = time.split(":");
-    if (parts.length != 2) return time;
-
-    int hour = int.tryParse(parts[0]) ?? 0;
-    final minute = parts[1];
-
-    final period = hour >= 12 ? "PM" : "AM";
-    hour = hour % 12 == 0 ? 12 : hour % 12;
-
-    return "$hour:$minute $period";
+  String _getRepeatText(int days) {
+    if (days == 1) return "Daily";
+    return "Every $days days";
   }
 }
 
-/// SMALL COMPONENTS (keep visual consistency)
+class TimeCapsule extends StatelessWidget {
+  final String time;
 
-class _TimeChip extends StatelessWidget {
-  final String label;
-
-  const _TimeChip({required this.label});
+  const TimeCapsule({super.key, required this.time});
 
   @override
   Widget build(BuildContext context) {
+    final hour = int.tryParse(time.split(":")[0]) ?? 0;
+
+    late List<Color> gradient;
+    late IconData icon;
+
+    if (hour >= 5 && hour < 12) {
+      gradient = [Color(0xFFFFD54F), Color(0xFFFFF3C2)];
+      icon = Icons.wb_sunny_rounded;
+    } else if (hour >= 12 && hour < 17) {
+      gradient = [Color(0xFF42A5F5), Color(0xFFBBDEFB)];
+      icon = Icons.light_mode_rounded;
+    } else if (hour >= 17 && hour < 21) {
+      gradient = [Color(0xFFFF8A65), Color(0xFFFFCCBC)];
+      icon = Icons.wb_twilight_rounded;
+    } else {
+      gradient = [Color(0xFF5C6BC0), Color(0xFFC5CAE9)];
+      icon = Icons.nights_stay_rounded;
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.65),
-        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(colors: gradient),
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 6,
+            offset: const Offset(0, 3),
+            color: Colors.black.withOpacity(.08),
+          ),
+        ],
       ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: Colors.black87,
-        ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            GlobalFunctions.formatTime(time),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
+            ),
+          ),
+        ],
       ),
     );
   }
-}
-
-class _DateInfo extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _DateInfo({
-    required this.label,
-    required this.value,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Colors.black45,
-          ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class PastelColors {
-  static const List<Color> lightColors = [
-    Color(0xFFE9EDFA),
-    Color(0xFFF9ECE6),
-    Color(0xFFF6E6F1),
-    Color(0xFFF0F1F6),
-  ];
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/adapters.dart';
+import 'package:medicine_app/utils/app_colors.dart';
 import 'package:medicine_app/views/permission_guide_screen.dart';
 import 'package:medicine_app/views/widgets/greeting_header.dart';
 import 'package:medicine_app/views/widgets/home_bottom_bar.dart';
@@ -231,7 +232,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFfffff),
+      backgroundColor: AppColors.scaffoldBackground,
       // floatingActionButton: _PrimaryFab(onTap: goToAddMedicine),
 
       bottomNavigationBar: HomeBottomBar(
@@ -329,7 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ),
                                     );
                                   },
-                                  child: MedicineReminderCard(
+                                  child: MedicineReminderCardHome(
                                     medicine: r.medicine,
                                     time: r.timeLabel,
                                   ),

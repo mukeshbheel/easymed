@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:medicine_app/utils/global_functions.dart';
+import 'package:medicine_app/views/widgets/common_appbar.dart';
 import 'package:uuid/uuid.dart';
 import '../models/medicine_model.dart';
 import '../services/medicine_storage.dart';
@@ -258,7 +259,9 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // _Header(),
-          AddMedicineAppBar(),
+          CommonAppBar(
+            title: "Add Medicine",
+          ),
 
           const SizedBox(height: 24),
       
@@ -795,7 +798,7 @@ class MedicineTypeSelector extends StatelessWidget {
                   Image.asset(
                     GlobalFunctions.getMedicineTypeAsset(item.$1),
                     width: 40,
-                    // height: 50,
+                    height: 40,
                     // color: isSelected ? Colors.white : Colors.grey,
                   ),
                   const SizedBox(height: 6),

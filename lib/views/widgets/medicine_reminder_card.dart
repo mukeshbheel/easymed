@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:medicine_app/utils/global_functions.dart';
+import 'package:medicine_app/utils/string_extension.dart';
 import '../../models/medicine_model.dart';
 
-class MedicineReminderCard extends StatelessWidget {
+class MedicineReminderCardHome extends StatelessWidget {
   final MedicineModel medicine;
   final String time; // 🔑 specific reminder time
 
-  const MedicineReminderCard({
+  const MedicineReminderCardHome({
     super.key,
     required this.medicine,
     required this.time,
@@ -48,12 +49,12 @@ class MedicineReminderCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  medicine.name,
+                  medicine.name.capitalizeFirst(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontSize: 18,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     color: Colors.black,
                   ),
                 ),

@@ -13,8 +13,8 @@ class HomeBottomBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.only(
-        left: 24,
-        right: 24,
+        left: 40,
+        right: 40,
         top: 12,
         bottom: 24,
       ),
@@ -40,7 +40,7 @@ class HomeBottomBar extends StatelessWidget {
               MaterialPageRoute(builder: (_) => ManageRemindersScreen()),
             );
           }, child: _NavIcon(icon: Icons.edit_note)),
-          _NavIcon(icon: Icons.bar_chart_rounded),
+          // _NavIcon(icon: Icons.bar_chart_rounded),
 
           /// CENTER ADD BUTTON
           GestureDetector(
@@ -72,7 +72,7 @@ class HomeBottomBar extends StatelessWidget {
             ),
           ),
 
-          _NavIcon(icon: Icons.notifications_none),
+          // _NavIcon(icon: Icons.notifications_none),
           _NavIcon(icon: Icons.person_outline),
         ],
       ),
