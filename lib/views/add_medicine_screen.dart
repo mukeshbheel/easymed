@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:medicine_app/utils/app_toast.dart';
 import 'package:medicine_app/utils/global_functions.dart';
 import 'package:medicine_app/views/widgets/common_appbar.dart';
 import 'package:uuid/uuid.dart';
@@ -30,6 +31,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   DateTime? _endDate;
   MedicineType _selectedType = MedicineType.tablet;
   int _repeatIntervalDays = 1;
+  bool isSavingMedicine = false;
 
   @override
   void initState() {
@@ -117,99 +119,108 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
   }
 
   Future<void> _saveMedicine() async {
-    if (!_formKey.currentState!.validate() || _times.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please complete all required fields")),
+    try{
+      if (!_formKey.currentState!.validate() || _times.isEmpty) {
+        AppToast.showError("Please complete all required fields");
+        return;
+      }
+
+      setState(() {
+        isSavingMedicine = true;
+      });
+
+      final isEdit = widget.medicine != null;
+      late MedicineModel medicine;
+
+      // ---------- NORMALIZE TIMES (STORE HH:mm) ----------
+      final normalizedTimes = _times
+          .map((t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}')
+          .toList();
+
+      if (isEdit) {
+        medicine = widget.medicine!;
+
+        // Cancel only this medicine notifications
+        await NotificationService.cancelMedicineNotifications(medicine);
+
+        medicine
+          ..name = _nameController.text.trim()
+          ..dosage = _dosageController.text.trim()
+          ..times = normalizedTimes
+          ..startDate = _startDate
+          ..endDate = _endDate
+          ..type = _selectedType
+          ..repeatIntervalDays = _repeatIntervalDays;
+
+        await medicine.save();
+      } else {
+        medicine = MedicineModel(
+          id: const Uuid().v4(),
+          name: _nameController.text.trim(),
+          dosage: _dosageController.text.trim(),
+          times: normalizedTimes,
+          startDate: _startDate,
+          endDate: _endDate,
+          type: _selectedType,
+          repeatIntervalDays: _repeatIntervalDays,
+          notificationIds: [],
+        );
+
+        await MedicineStorage.add(medicine);
+      }
+
+      // ---------- SCHEDULING ----------
+
+      final reminderDates = GlobalFunctions.generateReminderDates(
+        start: medicine.startDate,
+        end: medicine.endDate,
+        intervalDays: medicine.repeatIntervalDays,
+        maxDaysAhead: 30, // prevents Android alarm limits
       );
-      return;
-    }
 
-    final isEdit = widget.medicine != null;
-    late MedicineModel medicine;
+      medicine.notificationIds.clear();
 
-    // ---------- NORMALIZE TIMES (STORE HH:mm) ----------
-    final normalizedTimes = _times
-        .map((t) =>
-    '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}')
-        .toList();
+      for (final date in reminderDates) {
+        for (final timeStr in medicine.times) {
 
-    if (isEdit) {
-      medicine = widget.medicine!;
+          // parse HH:mm safely
+          final parts = timeStr.split(':');
+          final hour = int.parse(parts[0]);
+          final minute = int.parse(parts[1]);
 
-      // Cancel only this medicine notifications
-      await NotificationService.cancelMedicineNotifications(medicine);
+          final scheduledDate = DateTime(
+            date.year,
+            date.month,
+            date.day,
+            hour,
+            minute,
+          );
 
-      medicine
-        ..name = _nameController.text.trim()
-        ..dosage = _dosageController.text.trim()
-        ..times = normalizedTimes
-        ..startDate = _startDate
-        ..endDate = _endDate
-        ..type = _selectedType
-        ..repeatIntervalDays = _repeatIntervalDays;
+          if (scheduledDate.isBefore(DateTime.now())) continue;
+
+          final notificationId =
+              '${medicine.id}_${scheduledDate.millisecondsSinceEpoch}'.hashCode;
+
+          await NotificationService.scheduleNotification(
+            id: notificationId,
+            title: "Medicine Reminder",
+            body: "${medicine.name} • ${medicine.dosage}",
+            dateTime: scheduledDate,
+            medicineId: medicine.id,
+          );
+
+          medicine.notificationIds.add(notificationId);
+        }
+      }
 
       await medicine.save();
-    } else {
-      medicine = MedicineModel(
-        id: const Uuid().v4(),
-        name: _nameController.text.trim(),
-        dosage: _dosageController.text.trim(),
-        times: normalizedTimes,
-        startDate: _startDate,
-        endDate: _endDate,
-        type: _selectedType,
-        repeatIntervalDays: _repeatIntervalDays,
-        notificationIds: [],
-      );
-
-      await MedicineStorage.add(medicine);
+      AppToast.showSuccess("Medicine Saved");
+    }finally{
+      setState(() {
+        isSavingMedicine = false;
+      });
     }
-
-    // ---------- SCHEDULING ----------
-
-    final reminderDates = GlobalFunctions.generateReminderDates(
-      start: medicine.startDate,
-      end: medicine.endDate,
-      intervalDays: medicine.repeatIntervalDays,
-      maxDaysAhead: 30, // prevents Android alarm limits
-    );
-
-    medicine.notificationIds.clear();
-
-    for (final date in reminderDates) {
-      for (final timeStr in medicine.times) {
-
-        // parse HH:mm safely
-        final parts = timeStr.split(':');
-        final hour = int.parse(parts[0]);
-        final minute = int.parse(parts[1]);
-
-        final scheduledDate = DateTime(
-          date.year,
-          date.month,
-          date.day,
-          hour,
-          minute,
-        );
-
-        if (scheduledDate.isBefore(DateTime.now())) continue;
-
-        final notificationId =
-            '${medicine.id}_${scheduledDate.millisecondsSinceEpoch}'.hashCode;
-
-        await NotificationService.scheduleNotification(
-          id: notificationId,
-          title: "Medicine Reminder",
-          body: "${medicine.name} • ${medicine.dosage}",
-          dateTime: scheduledDate,
-          medicineId: medicine.id,
-        );
-
-        medicine.notificationIds.add(notificationId);
-      }
-    }
-
-    await medicine.save();
 
     Navigator.pop(context);
   }
@@ -333,6 +344,7 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
 
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             child: _PrimaryButton(
+              isLoading: isSavingMedicine,
               text: widget.medicine == null
                   ? "Add Medicine"
                   : "Update Medicine",
@@ -469,55 +481,6 @@ class _AddMedicineScreenState extends State<AddMedicineScreen> {
     );
   }
 
-}
-
-class AddMedicineAppBar extends StatelessWidget {
-  const AddMedicineAppBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      decoration: const BoxDecoration(
-        color: Color(0xFFfbeee5),
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(32),
-        ),
-      ),
-      // height: 100,
-      // color: const Color(0xFFFFF3E8), // soft cream background
-      child: SafeArea(
-        bottom: false,
-        child: Stack(
-          alignment: Alignment.center,
-          children: [
-            // Back button
-            Align(
-              alignment: Alignment.centerLeft,
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back_ios_new_rounded,
-                  size: 20,
-                  color: Colors.black,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
-
-            // Center title
-            const Text(
-              "Add Medicine",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class SoftLabelInput extends StatelessWidget {
@@ -667,13 +630,15 @@ class SoftDateInput extends StatelessWidget {
 class _PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback onTap;
+  final bool isLoading;
 
-  const _PrimaryButton({required this.text, required this.onTap});
+  const _PrimaryButton({required this.text, required this.onTap, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
+    return InkWell(
+      onTap: isLoading ? null : onTap,
+      splashColor: Colors.white,
       child: Container(
         height: 54,
         decoration: BoxDecoration(
@@ -683,7 +648,7 @@ class _PrimaryButton extends StatelessWidget {
           ),
         ),
         alignment: Alignment.center,
-        child: Text(
+        child: isLoading ? SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2.5,),) : Text(
           text,
           style: const TextStyle(
             color: Colors.white,

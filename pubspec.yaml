@@ -18,6 +18,7 @@ dependencies:
   uuid: ^4.3.3
   flutter_local_notifications: ^17.2.2
   timezone: ^0.9.3
+  fluttertoast: ^9.0.0
 
 dev_dependencies:
   flutter_test:
